@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("admin_user")
+}
+
+model Project {
+  id                Int      @id @default(autoincrement())
+  title             String
+  slug              String   @unique
+  shortDescription  String?  @map("short_description")
+  fullDescription   String?  @map("full_description")
+  techStack         String[] @map("tech_stack")
+  coverImageUrl     String?  @map("cover_image_url")
+  githubUrl         String?  @map("github_url")
+  liveUrl           String?  @map("live_url")
+  isFeatured        Boolean  @default(false) @map("is_featured")
+  displayOrder      Int      @default(0) @map("display_order")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("projects")
+}
+
+model Skill {
+  id           Int     @id @default(autoincrement())
+  name         String
+  category     String?
+  proficiency  Int?
+  displayOrder Int     @default(0) @map("display_order")
+
+  @@map("skills")
+}
+
+model Experience {
+  id           Int       @id @default(autoincrement())
+  title        String
+  organization String?
+  description  String?
+  startDate    DateTime? @map("start_date")
+  endDate      DateTime? @map("end_date")
+  displayOrder Int       @default(0) @map("display_order")
+
+  @@map("experience")
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  message   String
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("messages")
+}
+
+model SiteSetting {
+  key   String @id
+  value String
+
+  @@map("site_settings")
+}
