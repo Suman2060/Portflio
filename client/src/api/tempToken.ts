@@ -1,0 +1,2 @@
+const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoxLCJlbWFpbCI6InN1bWFuZGFuZ29sMjA2MEBnbWFpbC5jb20iLCJpYXQiOjE3ODYwMDg1MDksImV4cCI6MTc4NjAxMjEwOX0.Rp6Tv1e4H4XsykzayAg8h3kqjF4VteA-Vvf1DP2BLNE";
+export const TEMP_ADMIN_TOKEN = token;
