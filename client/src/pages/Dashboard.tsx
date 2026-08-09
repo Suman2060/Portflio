@@ -11,6 +11,50 @@ import { useNavigate } from 'react-router-dom';
 import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 
+function ExperienceManager() {
+  const [items, setItems] = useState<any[]>([]);
+  const [title, setTitle] = useState('');
+  const [org, setOrg] = useState('');
+  const [desc, setDesc] = useState('');
+
+  useEffect(() => { (async ()=>{ const mod = await import('../api/experience'); const list = await mod.getExperience(); setItems(list); })(); }, []);
+
+  async function handleAdd() {
+    try {
+      const mod = await import('../api/experience');
+      await mod.createExperience({ title, organization: org, description: desc });
+      setTitle(''); setOrg(''); setDesc('');
+      const list = await (await import('../api/experience')).getExperience();
+      setItems(list);
+    } catch (err) { console.error(err); }
+  }
+
+  async function handleDelete(id:number){
+    try{ const mod = await import('../api/experience'); await mod.deleteExperience(id); const list = await mod.getExperience(); setItems(list);}catch(e){console.error(e)}
+  }
+
+  return (
+    <div>
+      <div className="flex gap-2 mb-3">
+        <input value={title} onChange={(e)=>setTitle(e.target.value)} placeholder="Title" className="px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
+        <input value={org} onChange={(e)=>setOrg(e.target.value)} placeholder="Organization" className="px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
+        <button onClick={handleAdd} className="px-3 py-2 rounded bg-zinc-900 text-white">Add</button>
+      </div>
+      <div className="flex flex-col gap-2">
+        {items.map(i=> (
+          <div key={i.id} className="p-2 rounded bg-zinc-100 dark:bg-zinc-800 flex justify-between items-center">
+            <div>
+              <div className="font-medium">{i.title} <span className="text-sm text-zinc-500">{i.organization}</span></div>
+              <div className="text-sm text-zinc-600 dark:text-zinc-300">{i.description}</div>
+            </div>
+            <button onClick={()=>handleDelete(i.id)} className="text-red-600 text-xs">Delete</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -395,6 +439,12 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Experience management */}
+            <div className="mt-8 p-4 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+              <h2 className="text-lg font-medium mb-3">Experience</h2>
+              <ExperienceManager />
             </div>
 
           </div>
