@@ -1,16 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { getProjects } from '../api/projects';
+import { getSkills } from '../api/skills';
+import apiClient from '../api/client';
 import type { Project } from '../types/project';
+import type { Skill } from '../types/skill';
 
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [contact, setContact] = useState({ name: '', email: '', message: '' });
+  const [contactStatus, setContactStatus] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
         const data = await getProjects();
         setProjects(data);
+        const s = await getSkills();
+        setSkills(s);
       } catch (err) {
         console.error(err);
       } finally {
@@ -18,8 +26,6 @@ export default function Home() {
       }
     })();
   }, []);
-
-  const skills = ['React', 'TypeScript', 'Node.js', 'Express', 'Tailwind CSS', 'Prisma', 'Postgres'];
 
   return (
     <div className="min-h-screen py-16">
@@ -38,9 +44,31 @@ export default function Home() {
           <h2 className="text-2xl font-semibold mb-4">Skills</h2>
           <div className="flex flex-wrap gap-2">
             {skills.map((s) => (
-              <span key={s} className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 rounded text-sm">{s}</span>
+              <span key={s.id} className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 rounded text-sm">{s.name}</span>
             ))}
           </div>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-2xl font-semibold mb-4">Contact</h2>
+          {contactStatus && <p className="text-sm mb-2">{contactStatus}</p>}
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            setContactStatus('Sending...');
+            try {
+              await apiClient.post('/messages', contact);
+              setContact({ name: '', email: '', message: '' });
+              setContactStatus('Message sent — thank you!');
+            } catch (err) {
+              console.error(err);
+              setContactStatus('Failed to send message');
+            }
+          }} className="flex flex-col gap-2 max-w-xl">
+            <input placeholder="Your name" value={contact.name} onChange={(e)=>setContact(prev=>({...prev,name:e.target.value}))} className="px-3 py-2 rounded border bg-white dark:bg-zinc-800" required />
+            <input placeholder="Your email" value={contact.email} onChange={(e)=>setContact(prev=>({...prev,email:e.target.value}))} className="px-3 py-2 rounded border bg-white dark:bg-zinc-800" type="email" required />
+            <textarea placeholder="Message" value={contact.message} onChange={(e)=>setContact(prev=>({...prev,message:e.target.value}))} className="px-3 py-2 rounded border bg-white dark:bg-zinc-800" required />
+            <button className="px-4 py-2 rounded bg-zinc-900 text-white">Send message</button>
+          </form>
         </section>
 
         <section>
