@@ -4,6 +4,8 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import DarkModeToggle from './components/DarkModeToggle';
+import React from 'react';
+const ProjectDetail = React.lazy(() => import('./pages/ProjectDetail'));
 
 function App() {
   return (
@@ -27,6 +29,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/admin" element={<Dashboard />} />
+            <Route path="/projects/:slug" element={/* lazy load detail */ <React.Suspense fallback={<div className="p-6">Loading…</div>}><ProjectDetail /></React.Suspense>} />
           </Routes>
         </main>
       </div>
