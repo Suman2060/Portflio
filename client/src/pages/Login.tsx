@@ -31,27 +31,28 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-16">
-      <div className="w-full max-w-md p-6 rounded-xl border bg-white dark:bg-zinc-900 dark:border-zinc-700">
-        <h2 className="text-xl font-semibold mb-4">Admin Login</h2>
+    <div className="min-h-screen flex items-center justify-center py-16 px-6">
+      <div className="w-full max-w-md p-6 panel">
+        <h2 className="font-display font-bold uppercase tracking-tight text-2xl mb-1">Admin Login</h2>
+        <p className="text-sm mb-5" style={{ color: 'var(--mid)' }}>sign in to manage projects, skills & messages</p>
         {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
+            placeholder="hello@yourname.dev"
             required
-            className="px-3 py-2 rounded-lg border bg-white dark:bg-zinc-800"
+            className="field"
           />
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
+            placeholder="••••••••"
             required
-            className="px-3 py-2 rounded-lg border bg-white dark:bg-zinc-800"
+            className="field"
           />
-          <button className="px-4 py-2 rounded-lg bg-zinc-900 text-white" disabled={loading}>
+          <button className="btn btn-brand justify-center" style={{ color: '#fff' }} disabled={loading}>
             {loading ? 'Logging in…' : 'Login'}
           </button>
         </form>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function DarkModeToggle() {
   const [isDark, setIsDark] = useState(() => {
@@ -21,8 +21,12 @@ export default function DarkModeToggle() {
   }, [isDark]);
 
   return (
-    <button onClick={() => setIsDark((s) => !s)} className="px-3 py-1 rounded bg-zinc-100 dark:bg-zinc-800">
-      {isDark ? 'Light' : 'Dark'}
+    <button
+      onClick={() => setIsDark((s) => !s)}
+      className="file-chip cursor-pointer"
+      title={isDark ? "Switch to light" : "Switch to dark"}
+    >
+      {isDark ? '◐ light' : '◐ dark'}
     </button>
   );
 }
