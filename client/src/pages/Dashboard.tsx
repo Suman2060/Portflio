@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Fragment } from 'react';
 import { getProjects, createProject, updateProject, deleteProject } from '../api/projects';
 import type { Project, CreateProjectInput } from '../types/project';
 import { useNavigate } from 'react-router-dom';
-import { PencilSquareIcon, TrashIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { Dialog, Transition } from '@headlessui/react';
 
 export default function Dashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -19,7 +20,9 @@ export default function Dashboard() {
   const [techStackInput, setTechStackInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [editForm, setEditForm] = useState<Partial<CreateProjectInput>>({});
 
   const navigate = useNavigate();
@@ -82,8 +85,8 @@ export default function Dashboard() {
     }
   }
 
-  function startEdit(p: Project) {
-    setEditingId(p.id);
+  function openEditModal(p: Project) {
+    setActiveProject(p);
     setEditForm({
       title: p.title,
       slug: p.slug,
@@ -91,11 +94,23 @@ export default function Dashboard() {
       techStack: p.techStack,
       isFeatured: p.isFeatured,
     });
+    setIsEditOpen(true);
   }
 
-  function cancelEdit() {
-    setEditingId(null);
+  function closeEditModal() {
+    setIsEditOpen(false);
+    setActiveProject(null);
     setEditForm({});
+  }
+
+  function openDeleteModal(p: Project) {
+    setActiveProject(p);
+    setIsDeleteOpen(true);
+  }
+
+  function closeDeleteModal() {
+    setIsDeleteOpen(false);
+    setActiveProject(null);
   }
 
   function handleEditChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
@@ -108,15 +123,15 @@ export default function Dashboard() {
     }
   }
 
-  async function saveEdit(id: number) {
+  async function saveEdit() {
+    if (!activeProject) return;
     try {
       const payload: Partial<CreateProjectInput> = { ...editForm } as any;
       if (typeof payload.techStack === 'string') {
         payload.techStack = (payload.techStack as any).split(',').map((s: string) => s.trim()).filter(Boolean);
       }
-      await updateProject(id, payload);
-      setEditingId(null);
-      setEditForm({});
+      await updateProject(activeProject.id, payload);
+      closeEditModal();
       await loadProjects();
     } catch (err) {
       console.error(err);
@@ -124,11 +139,11 @@ export default function Dashboard() {
     }
   }
 
-  async function handleDelete(id: number) {
-    const ok = window.confirm('Delete this project? This action cannot be undone.');
-    if (!ok) return;
+  async function confirmDelete() {
+    if (!activeProject) return;
     try {
-      await deleteProject(id);
+      await deleteProject(activeProject.id);
+      closeDeleteModal();
       await loadProjects();
     } catch (err) {
       console.error(err);
@@ -180,41 +195,125 @@ export default function Dashboard() {
                     {p.shortDescription && <p className="text-sm text-zinc-500 dark:text-zinc-300 mt-1.5">{p.shortDescription}</p>}
                   </div>
                   <div className="flex items-center gap-2">
-                    <button title="Edit" onClick={() => startEdit(p)} className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                    <button title="Edit" onClick={() => openEditModal(p)} className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800">
                       <PencilSquareIcon className="w-5 h-5" />
                     </button>
-                    <button title="Delete" onClick={() => handleDelete(p.id)} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900">
+                    <button title="Delete" onClick={() => openDeleteModal(p)} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900">
                       <TrashIcon className="w-5 h-5 text-red-600" />
                     </button>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap gap-1.5 mt-3">{p.techStack.map((t) => (<span key={t} className="text-[11px] font-mono px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-200">{t}</span>))}</div>
-
-                {editingId === p.id && (
-                  <div className="mt-4 p-4 border rounded bg-zinc-50 dark:bg-zinc-900">
-                    <input name="title" value={(editForm.title as string) || ''} onChange={handleEditChange} className="w-full mb-2 px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
-                    <input name="slug" value={(editForm.slug as string) || ''} onChange={handleEditChange} className="w-full mb-2 px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
-                    <textarea name="shortDescription" value={(editForm.shortDescription as string) || ''} onChange={handleEditChange} className="w-full mb-2 px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
-                    <input name="techStack" value={(editForm.techStack as any) ? (editForm.techStack as string[]).join(', ') : ''} onChange={handleEditChange} placeholder="Comma separated" className="w-full mb-2 px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
-                    <label className="flex items-center gap-2 mb-2">
-                      <input type="checkbox" name="isFeatured" checked={Boolean(editForm.isFeatured)} onChange={handleEditChange} /> Is featured
-                    </label>
-                    <div className="flex gap-2">
-                      <button onClick={() => saveEdit(p.id)} className="px-3 py-1 rounded bg-green-600 text-white flex items-center gap-2">
-                        <CheckIcon className="w-4 h-4" /> Save
-                      </button>
-                      <button onClick={cancelEdit} className="px-3 py-1 rounded bg-zinc-200 dark:bg-zinc-800 flex items-center gap-2">
-                        <XMarkIcon className="w-4 h-4" /> Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Edit Modal */}
+      <Transition appear show={isEditOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={closeEditModal}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-200"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-150"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/30" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-200"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-150"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title as="h3" className="text-lg font-medium leading-6">
+                    Edit project
+                  </Dialog.Title>
+                  <div className="mt-4 flex flex-col gap-3">
+                    <input name="title" value={(editForm.title as string) || ''} onChange={handleEditChange} className="w-full px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
+                    <input name="slug" value={(editForm.slug as string) || ''} onChange={handleEditChange} className="w-full px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
+                    <textarea name="shortDescription" value={(editForm.shortDescription as string) || ''} onChange={handleEditChange} className="w-full px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
+                    <input name="techStack" value={(editForm.techStack as any) ? (editForm.techStack as string[]).join(', ') : ''} onChange={handleEditChange} placeholder="Comma separated" className="w-full px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" name="isFeatured" checked={Boolean(editForm.isFeatured)} onChange={handleEditChange} /> Is featured
+                    </label>
+                  </div>
+
+                  <div className="mt-6 flex justify-end gap-2">
+                    <button type="button" className="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800" onClick={closeEditModal}>
+                      Cancel
+                    </button>
+                    <button type="button" className="px-4 py-2 rounded bg-zinc-900 text-white" onClick={saveEdit}>
+                      Save
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+
+      {/* Delete Confirmation Modal */}
+      <Transition appear show={isDeleteOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={closeDeleteModal}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-200"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-150"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/30" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-200"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-150"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title as="h3" className="text-lg font-medium leading-6">
+                    Delete project
+                  </Dialog.Title>
+                  <div className="mt-2">
+                    <p className="text-sm text-zinc-600 dark:text-zinc-300">Are you sure you want to delete "{activeProject?.title}"? This action cannot be undone.</p>
+                  </div>
+
+                  <div className="mt-6 flex justify-end gap-2">
+                    <button type="button" className="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800" onClick={closeDeleteModal}>
+                      Cancel
+                    </button>
+                    <button type="button" className="px-4 py-2 rounded bg-red-600 text-white" onClick={confirmDelete}>
+                      Delete
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
     </div>
   );
 }
