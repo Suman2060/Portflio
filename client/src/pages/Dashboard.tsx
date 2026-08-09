@@ -1,7 +1,9 @@
 import React, { useEffect, useState, Fragment } from 'react';
 import { getProjects, createProject, updateProject, deleteProject } from '../api/projects';
 import { uploadFile } from '../api/uploads';
+import { getSkills, createSkill, deleteSkill } from '../api/skills';
 import type { Project, CreateProjectInput } from '../types/project';
+import type { Skill } from '../types/skill';
 import { useNavigate } from 'react-router-dom';
 import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
@@ -34,13 +36,19 @@ export default function Dashboard() {
 
   const navigate = useNavigate();
 
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [newSkillName, setNewSkillName] = useState('');
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
       navigate('/login');
       return;
     }
-    loadProjects();
+    (async () => {
+      await loadProjects();
+      await loadSkills();
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -55,6 +63,35 @@ export default function Dashboard() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadSkills() {
+    try {
+      const s = await getSkills();
+      setSkills(s);
+    } catch (err) {
+      console.error('Failed to load skills', err);
+    }
+  }
+
+  async function handleCreateSkill() {
+    if (!newSkillName.trim()) return;
+    try {
+      await createSkill({ name: newSkillName });
+      setNewSkillName('');
+      await loadSkills();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function handleDeleteSkill(id: number) {
+    try {
+      await deleteSkill(id);
+      await loadSkills();
+    } catch (err) {
+      console.error(err);
     }
   }
 
@@ -197,7 +234,6 @@ export default function Dashboard() {
 
         {/* Existing project list */}
         
-
         {error && <p className="text-sm text-red-600 mb-6">{error}</p>}
 
         {loading ? (
@@ -225,6 +261,24 @@ export default function Dashboard() {
                 <div className="flex flex-wrap gap-1.5 mt-3">{p.techStack.map((t) => (<span key={t} className="text-[11px] font-mono px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-200">{t}</span>))}</div>
               </div>
             ))}
+
+            {/* Skills management */}
+            <div className="mt-8 p-4 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+              <h2 className="text-lg font-medium mb-3">Skills</h2>
+              <div className="flex gap-2 mb-3">
+                <input value={newSkillName} onChange={(e) => setNewSkillName(e.target.value)} placeholder="New skill name" className="px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
+                <button onClick={handleCreateSkill} className="px-3 py-2 rounded bg-zinc-900 text-white">Add</button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {skills.map((s) => (
+                  <div key={s.id} className="flex items-center gap-2 px-3 py-1 rounded bg-zinc-100 dark:bg-zinc-800">
+                    <span className="text-sm">{s.name}</span>
+                    <button onClick={() => handleDeleteSkill(s.id)} className="text-red-600 text-xs">Delete</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         )}
       </div>

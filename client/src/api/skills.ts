@@ -10,3 +10,13 @@ export async function createSkill(data: Partial<Skill>) {
   const res = await apiClient.post('/skills', data);
   return res.data;
 }
+
+export async function updateSkill(id: number, data: Partial<Skill>) {
+  const res = await apiClient.put(`/skills/${id}`, data);
+  return res.data;
+}
+
+export async function deleteSkill(id: number) {
+  const res = await apiClient.delete(`/skills/${id}`);
+  return res.data;
+}
