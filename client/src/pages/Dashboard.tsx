@@ -1,4 +1,7 @@
 import React, { useEffect, useState, Fragment } from 'react';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { getProjects, createProject, updateProject, deleteProject } from '../api/projects';
 import { uploadFile } from '../api/uploads';
 import { getSkills, createSkill, deleteSkill } from '../api/skills';
@@ -35,6 +38,9 @@ export default function Dashboard() {
   const [editFile, setEditFile] = useState<File | null>(null);
 
   const navigate = useNavigate();
+  const sensors = useSensors(useSensor(PointerSensor));
+  const [reorderMode, setReorderMode] = useState(false);
+  const [sortedIds, setSortedIds] = useState<number[]>([]);
 
   const [skills, setSkills] = useState<Skill[]>([]);
   const [newSkillName, setNewSkillName] = useState('');
@@ -57,6 +63,7 @@ export default function Dashboard() {
       setLoading(true);
       const data = await getProjects();
       setProjects(data);
+      setSortedIds(data.map((p) => p.id));
       setError(null);
     } catch (err) {
       setError('Failed to load projects');
@@ -201,6 +208,49 @@ export default function Dashboard() {
     }
   }
 
+  function SortableItem({ id, children }: { id: number; children: React.ReactNode }) {
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+    } as React.CSSProperties;
+    return (
+      <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="cursor-grab">
+        {children}
+      </div>
+    );
+  }
+
+  function handleDragEnd(event: any) {
+    const { active, over } = event;
+    if (!over) return;
+    if (active.id !== over.id) {
+      const oldIndex = sortedIds.indexOf(active.id);
+      const newIndex = sortedIds.indexOf(over.id);
+      const newOrder = arrayMove(sortedIds, oldIndex, newIndex);
+      setSortedIds(newOrder);
+      // reorder projects in memory to reflect
+      setProjects((prev) => {
+        const map = new Map(prev.map((p) => [p.id, p]));
+        return newOrder.map((id) => map.get(id)!).filter(Boolean) as Project[];
+      });
+    }
+  }
+
+  async function saveOrder() {
+    try {
+      for (let i = 0; i < sortedIds.length; i++) {
+        const id = sortedIds[i];
+        await updateProject(id, { displayOrder: i });
+      }
+      setReorderMode(false);
+      await loadProjects();
+    } catch (err) {
+      console.error(err);
+      setError('Failed to save order');
+    }
+  }
+
   async function confirmDelete() {
     if (!activeProject) return;
     try {
@@ -228,8 +278,10 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="mb-6 flex justify-end">
+        <div className="mb-6 flex justify-end gap-3">
           <button onClick={() => setIsAddOpen(true)} className="px-4 py-2 rounded bg-zinc-900 text-white">Add Project</button>
+          <button onClick={() => setReorderMode((s) => !s)} className="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800">{reorderMode ? 'Cancel reorder' : 'Reorder Projects'}</button>
+          {reorderMode && <button onClick={saveOrder} className="px-4 py-2 rounded bg-green-600 text-white">Save Order</button>}
         </div>
 
         {/* Existing project list */}
@@ -241,26 +293,49 @@ export default function Dashboard() {
         ) : (
           <div className="flex flex-col gap-4">
             {projects.length === 0 && <p className="text-sm text-zinc-400">No projects yet.</p>}
-            {projects.map((p) => (
-              <div key={p.id} className="p-5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="font-medium text-[15px]">{p.title}</h3>
-                    {p.shortDescription && <p className="text-sm text-zinc-500 dark:text-zinc-300 mt-1.5">{p.shortDescription}</p>}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button title="Edit" onClick={() => openEditModal(p)} className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800">
-                      <PencilSquareIcon className="w-5 h-5" />
-                    </button>
-                    <button title="Delete" onClick={() => openDeleteModal(p)} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900">
-                      <TrashIcon className="w-5 h-5 text-red-600" />
-                    </button>
-                  </div>
-                </div>
 
-                <div className="flex flex-wrap gap-1.5 mt-3">{p.techStack.map((t) => (<span key={t} className="text-[11px] font-mono px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-200">{t}</span>))}</div>
-              </div>
-            ))}
+            {reorderMode ? (
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={sortedIds} strategy={verticalListSortingStrategy}>
+                  <div className="flex flex-col gap-3">
+                    {projects.map((p) => (
+                      <SortableItem key={p.id} id={p.id}>
+                        <div className="p-5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="font-medium">{p.title}</h3>
+                              {p.shortDescription && <p className="text-sm text-zinc-500 dark:text-zinc-300">{p.shortDescription}</p>}
+                            </div>
+                            <div className="text-zinc-400 text-sm">Drag</div>
+                          </div>
+                        </div>
+                      </SortableItem>
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            ) : (
+              projects.map((p) => (
+                <div key={p.id} className="p-5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-medium text-[15px]">{p.title}</h3>
+                      {p.shortDescription && <p className="text-sm text-zinc-500 dark:text-zinc-300 mt-1.5">{p.shortDescription}</p>}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button title="Edit" onClick={() => openEditModal(p)} className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                        <PencilSquareIcon className="w-5 h-5" />
+                      </button>
+                      <button title="Delete" onClick={() => openDeleteModal(p)} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900">
+                        <TrashIcon className="w-5 h-5 text-red-600" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5 mt-3">{p.techStack.map((t) => (<span key={t} className="text-[11px] font-mono px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-200">{t}</span>))}</div>
+                </div>
+              ))
+            )}
 
             {/* Skills management */}
             <div className="mt-8 p-4 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
