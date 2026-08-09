@@ -1,5 +1,6 @@
 import React, { useEffect, useState, Fragment } from 'react';
 import { getProjects, createProject, updateProject, deleteProject } from '../api/projects';
+import { uploadFile } from '../api/uploads';
 import type { Project, CreateProjectInput } from '../types/project';
 import { useNavigate } from 'react-router-dom';
 import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
@@ -14,16 +15,22 @@ export default function Dashboard() {
     title: '',
     slug: '',
     shortDescription: '',
+    fullDescription: undefined,
     techStack: [],
+    coverImageUrl: undefined,
     isFeatured: false,
   });
   const [techStackInput, setTechStackInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [editForm, setEditForm] = useState<Partial<CreateProjectInput>>({});
+
+  const [addFile, setAddFile] = useState<File | null>(null);
+  const [editFile, setEditFile] = useState<File | null>(null);
 
   const navigate = useNavigate();
 
@@ -67,15 +74,23 @@ export default function Dashboard() {
     setError(null);
 
     try {
+      let coverUrl = form.coverImageUrl;
+      if (addFile) {
+        const upl = await uploadFile(addFile);
+        coverUrl = upl.url;
+      }
+
       const techStack = techStackInput
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean);
 
-      await createProject({ ...form, techStack });
+      await createProject({ ...form, techStack, coverImageUrl: coverUrl });
 
       setForm({ title: '', slug: '', shortDescription: '', techStack: [], isFeatured: false });
       setTechStackInput('');
+      setAddFile(null);
+      setIsAddOpen(false);
       await loadProjects();
     } catch (err) {
       setError('Failed to create project — check the console');
@@ -123,6 +138,16 @@ export default function Dashboard() {
     }
   }
 
+  function handleAddFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files && e.target.files[0];
+    if (f) setAddFile(f);
+  }
+
+  function handleEditFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files && e.target.files[0];
+    if (f) setEditFile(f);
+  }
+
   async function saveEdit() {
     if (!activeProject) return;
     try {
@@ -166,19 +191,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3 p-6 rounded-xl border border-zinc-200 mb-8 bg-zinc-50/50 dark:bg-zinc-900 dark:border-zinc-700">
-          <input name="title" placeholder="Title" value={form.title} onChange={handleChange} required className="px-3 py-2.5 rounded-lg border bg-white dark:bg-zinc-800" />
-          <input name="slug" placeholder="slug-like-this" value={form.slug} onChange={handleChange} required className="px-3 py-2.5 rounded-lg border bg-white dark:bg-zinc-800" />
-          <textarea name="shortDescription" placeholder="Short description" value={form.shortDescription} onChange={handleChange} className="px-3 py-2.5 rounded-lg border bg-white dark:bg-zinc-800" />
-          <input placeholder="Tech stack (comma separated)" value={techStackInput} onChange={(e) => setTechStackInput(e.target.value)} className="px-3 py-2.5 rounded-lg border bg-white dark:bg-zinc-800" />
-          <label className="flex items-center gap-2 text-sm px-1">
-            <input type="checkbox" name="isFeatured" checked={form.isFeatured} onChange={handleChange} className="rounded border-zinc-300" />
-            Featured
-          </label>
-          <button type="submit" disabled={submitting} className="mt-1 px-4 py-2.5 rounded-lg bg-zinc-900 text-white">
-            {submitting ? 'Saving…' : 'Add project'}
-          </button>
-        </form>
+        <div className="mb-6 flex justify-end">
+          <button onClick={() => setIsAddOpen(true)} className="px-4 py-2 rounded bg-zinc-900 text-white">Add Project</button>
+        </div>
+
+        {/* Existing project list */}
+        
 
         {error && <p className="text-sm text-red-600 mb-6">{error}</p>}
 
@@ -210,6 +228,42 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Add Modal */}
+      <Transition appear show={isAddOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setIsAddOpen(false)}>
+          <Transition.Child as={Fragment} enter="ease-out duration-200" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-150" leaveFrom="opacity-100" leaveTo="opacity-0">
+            <div className="fixed inset-0 bg-black/30" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child as={Fragment} enter="ease-out duration-200" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="ease-in duration-150" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
+                <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title as="h3" className="text-lg font-medium leading-6">Add project</Dialog.Title>
+
+                  <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3">
+                    <input name="title" placeholder="Title" value={form.title} onChange={handleChange} required className="w-full px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
+                    <input name="slug" placeholder="slug-like-this" value={form.slug} onChange={handleChange} required className="w-full px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
+                    <textarea name="shortDescription" placeholder="Short description" value={form.shortDescription} onChange={handleChange} className="w-full px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
+                    <textarea name="fullDescription" placeholder="Full description (markdown)" value={(form.fullDescription as string) || ''} onChange={handleChange} className="w-full px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
+                    <input placeholder="Tech stack (comma separated)" value={techStackInput} onChange={(e) => setTechStackInput(e.target.value)} className="w-full px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
+                    <input type="file" onChange={handleAddFileChange} />
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" name="isFeatured" checked={form.isFeatured} onChange={handleChange} /> Featured
+                    </label>
+
+                    <div className="flex justify-end gap-2 mt-4">
+                      <button type="button" className="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800" onClick={() => setIsAddOpen(false)}>Cancel</button>
+                      <button type="submit" className="px-4 py-2 rounded bg-zinc-900 text-white">Create</button>
+                    </div>
+                  </form>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
 
       {/* Edit Modal */}
       <Transition appear show={isEditOpen} as={Fragment}>
@@ -245,7 +299,9 @@ export default function Dashboard() {
                     <input name="title" value={(editForm.title as string) || ''} onChange={handleEditChange} className="w-full px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
                     <input name="slug" value={(editForm.slug as string) || ''} onChange={handleEditChange} className="w-full px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
                     <textarea name="shortDescription" value={(editForm.shortDescription as string) || ''} onChange={handleEditChange} className="w-full px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
+                    <textarea name="fullDescription" value={(editForm.fullDescription as string) || ''} onChange={handleEditChange} placeholder="Full description (supports markdown)" className="w-full px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
                     <input name="techStack" value={(editForm.techStack as any) ? (editForm.techStack as string[]).join(', ') : ''} onChange={handleEditChange} placeholder="Comma separated" className="w-full px-3 py-2 rounded border bg-white dark:bg-zinc-800" />
+                    <input type="file" onChange={handleEditFileChange} className="w-full" />
                     <label className="flex items-center gap-2">
                       <input type="checkbox" name="isFeatured" checked={Boolean(editForm.isFeatured)} onChange={handleEditChange} /> Is featured
                     </label>
@@ -255,7 +311,18 @@ export default function Dashboard() {
                     <button type="button" className="px-4 py-2 rounded bg-zinc-200 dark:bg-zinc-800" onClick={closeEditModal}>
                       Cancel
                     </button>
-                    <button type="button" className="px-4 py-2 rounded bg-zinc-900 text-white" onClick={saveEdit}>
+                    <button type="button" className="px-4 py-2 rounded bg-zinc-900 text-white" onClick={async () => {
+                      try {
+                        if (editFile && activeProject) {
+                          const upl = await uploadFile(editFile);
+                          setEditForm((prev) => ({ ...prev, coverImageUrl: upl.url }));
+                        }
+                        await saveEdit();
+                      } catch (err) {
+                        console.error(err);
+                        setError('Failed to upload or save');
+                      }
+                    }}>
                       Save
                     </button>
                   </div>
