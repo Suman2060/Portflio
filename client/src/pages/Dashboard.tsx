@@ -44,6 +44,7 @@ export default function Dashboard() {
 
   const [skills, setSkills] = useState<Skill[]>([]);
   const [newSkillName, setNewSkillName] = useState('');
+  const [messages, setMessages] = useState<any[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -54,6 +55,7 @@ export default function Dashboard() {
     (async () => {
       await loadProjects();
       await loadSkills();
+      await loadMessages();
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -97,6 +99,26 @@ export default function Dashboard() {
     try {
       await deleteSkill(id);
       await loadSkills();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function loadMessages() {
+    try {
+      const mod = await import('../api/messages');
+      const msgs = await mod.getMessages();
+      setMessages(msgs);
+    } catch (err) {
+      console.error('Failed to load messages', err);
+    }
+  }
+
+  async function markRead(id: number) {
+    try {
+      const mod = await import('../api/messages');
+      await mod.markMessageRead(id);
+      await loadMessages();
     } catch (err) {
       console.error(err);
     }
@@ -349,6 +371,27 @@ export default function Dashboard() {
                   <div key={s.id} className="flex items-center gap-2 px-3 py-1 rounded bg-zinc-100 dark:bg-zinc-800">
                     <span className="text-sm">{s.name}</span>
                     <button onClick={() => handleDeleteSkill(s.id)} className="text-red-600 text-xs">Delete</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div className="mt-8 p-4 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+              <h2 className="text-lg font-medium mb-3">Messages</h2>
+              {messages.length === 0 && <p className="text-sm text-zinc-400">No messages yet.</p>}
+              <div className="flex flex-col gap-3">
+                {messages.map((m) => (
+                  <div key={m.id} className={`p-3 rounded ${m.isRead ? 'bg-zinc-50 dark:bg-zinc-800' : 'bg-white dark:bg-zinc-900'} border` }>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="font-medium">{m.name} <span className="text-xs text-zinc-500">{m.email}</span></div>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-300">{m.message}</p>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        {!m.isRead && <button onClick={() => markRead(m.id)} className="px-2 py-1 rounded bg-zinc-900 text-white text-sm">Mark read</button>}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
