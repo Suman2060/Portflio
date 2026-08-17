@@ -1,41 +1,71 @@
 import express from 'express';
 import prisma from '../../config/db.js';
+import authMiddleware from '../../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Public endpoint to create a message
-router.post('/', async (req, res) => {
+// Public endpoint to create a contact message
+router.post('/', async (req, res, next) => {
   try {
     const { name, email, message } = req.body;
-    if (!name || !email || !message) return res.status(400).json({ error: 'All fields are required' });
-    const msg = await prisma.message.create({ data: { name, email, message } });
-    res.status(201).json(msg);
+    if (!name?.trim() || !email?.trim() || !message?.trim()) {
+      return res.status(400).json({ error: 'All fields (name, email, message) are required' });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return res.status(400).json({ error: 'Please provide a valid email address' });
+    }
+
+    const msg = await prisma.message.create({
+      data: {
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        message: message.trim(),
+      },
+    });
+    res.status(201).json({ success: true, message: 'Message delivered successfully', id: msg.id });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to create message' });
+    next(err);
   }
 });
 
 // Admin endpoints
-import authMiddleware from '../../middleware/authMiddleware.js';
-
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, async (_req, res, next) => {
   try {
     const msgs = await prisma.message.findMany({ orderBy: { createdAt: 'desc' } });
     res.json(msgs);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch messages' });
+    next(err);
   }
 });
 
-router.put('/:id/read', authMiddleware, async (req, res) => {
+router.put('/:id/read', authMiddleware, async (req, res, next) => {
   try {
-    const msg = await prisma.message.update({ where: { id: Number(req.params.id) }, data: { isRead: true } });
+    const id = Number(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+
+    const msg = await prisma.message.update({
+      where: { id },
+      data: { isRead: true },
+    });
     res.json(msg);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to update message' });
+    if (err?.code === 'P2025') return res.status(404).json({ error: 'Message not found' });
+    next(err);
+  }
+});
+
+router.delete('/:id', authMiddleware, async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+
+    await prisma.message.delete({ where: { id } });
+    res.status(204).send();
+  } catch (err) {
+    if (err?.code === 'P2025') return res.status(404).json({ error: 'Message not found' });
+    next(err);
   }
 });
 

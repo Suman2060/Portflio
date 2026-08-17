@@ -30,6 +30,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const skill = await prisma.skill.update({ where: { id: Number(req.params.id) }, data: req.body });
     res.json(skill);
   } catch (err) {
+    if (err?.code === 'P2025') return res.status(404).json({ error: 'Skill not found' });
     console.error(err);
     res.status(500).json({ error: 'Failed to update skill' });
   }
@@ -40,6 +41,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     await prisma.skill.delete({ where: { id: Number(req.params.id) } });
     res.status(204).send();
   } catch (err) {
+    if (err?.code === 'P2025') return res.status(404).json({ error: 'Skill not found' });
     console.error(err);
     res.status(500).json({ error: 'Failed to delete skill' });
   }

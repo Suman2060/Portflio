@@ -10,3 +10,8 @@ export async function markMessageRead(id: number) {
   const res = await apiClient.put(`/messages/${id}/read`);
   return res.data;
 }
+
+export async function deleteMessage(id: number) {
+  const res = await apiClient.delete(`/messages/${id}`);
+  return res.data;
+}

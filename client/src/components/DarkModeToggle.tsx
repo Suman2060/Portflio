@@ -4,7 +4,7 @@ export default function DarkModeToggle() {
   const [isDark, setIsDark] = useState(() => {
     try {
       return localStorage.getItem('theme') === 'dark' || document.documentElement.classList.contains('dark');
-    } catch (e) {
+    } catch {
       return false;
     }
   });

@@ -1,116 +1,146 @@
 import express from 'express';
-console.log('projects.routes.js loaded');
 import prisma from '../../config/db.js';
 import authMiddleware from '../../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.get('/', async (req, res) => {
-    try {
-        const projects = await prisma.project.findMany({
-            orderBy: { displayOrder: 'asc' },
-        });
-        res.json(projects);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({
-            error: "Failed to fetch projects"
-        });
-    }
+// GET all projects
+router.get('/', async (_req, res, next) => {
+  try {
+    const projects = await prisma.project.findMany({
+      orderBy: { displayOrder: 'asc' },
+    });
+    res.json(projects);
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.get('/:slug', async (req, res) => {
-    try {
-        const project = await prisma.project.findUnique({
-            where: { slug: req.params.slug },
-        });
-        if (!project) {
-            return res.status(404).json({
-                error: "Project Not found"
-            });
-        }
-        res.json(project);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({
-            error: 'Failed to fetch Projects'
-        });
+// GET single project by slug
+router.get('/:slug', async (req, res, next) => {
+  try {
+    const project = await prisma.project.findUnique({
+      where: { slug: req.params.slug },
+    });
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
     }
+    res.json(project);
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.post('/', authMiddleware, async (req, res) => {
-    try {
-        const { title, slug, shortDescription, fullDescription, techStack, coverImageUrl, githubUrl, liveUrl, isFeatured, displayOrder } = req.body;
+// POST new project (Admin only)
+router.post('/', authMiddleware, async (req, res, next) => {
+  try {
+    const {
+      title,
+      slug,
+      shortDescription,
+      fullDescription,
+      techStack,
+      coverImageUrl,
+      githubUrl,
+      liveUrl,
+      isFeatured,
+      displayOrder,
+    } = req.body;
 
-        // Basic validation
-        if (!title || !slug) {
-            return res.status(400).json({
-                error: "Title and slug are required"
-            });
-        }
-
-        console.log('Creating project with slug:', slug);
-        const project = await prisma.project.create({
-            data: {
-                title,
-                slug,
-                shortDescription,
-                fullDescription,
-                techStack: techStack || [],
-                coverImageUrl,
-                githubUrl,
-                liveUrl,
-                isFeatured: isFeatured ?? false,
-                displayOrder: displayOrder ?? 0,
-            },
-        });
-        res.status(201).json(project);
-    } catch (err) {
-        console.error('Error creating project:', err);
-        if (err.code === 'P2002') {
-            return res.status(409).json({ error: 'A project with that slug already exists' });
-        }
-        // Provide more context for troubleshooting
-        return res.status(500).json({
-            error: 'Failed to create project',
-            details: err.message
-        });
+    if (!title || !slug) {
+      return res.status(400).json({ error: 'Title and slug are required' });
     }
+
+    const project = await prisma.project.create({
+      data: {
+        title: title.trim(),
+        slug: slug.trim().toLowerCase(),
+        shortDescription: shortDescription || null,
+        fullDescription: fullDescription || null,
+        techStack: Array.isArray(techStack) ? techStack : [],
+        coverImageUrl: coverImageUrl || null,
+        githubUrl: githubUrl || null,
+        liveUrl: liveUrl || null,
+        isFeatured: Boolean(isFeatured),
+        displayOrder: typeof displayOrder === 'number' ? displayOrder : 0,
+      },
+    });
+    res.status(201).json(project);
+  } catch (err) {
+    if (err.code === 'P2002') {
+      return res.status(409).json({ error: 'A project with that slug already exists' });
+    }
+    next(err);
+  }
 });
 
-router.put('/:id', authMiddleware, async (req, res) => {
-    try {
-        const project = await prisma.project.update({
-            where: { id: Number(req.params.id) },
-            data: req.body,
-        });
-        res.json(project);
-    } catch (err) {
-        console.error(err);
-        if (err.code === 'P2025') {
-            return res.status(404).json({
-                error: 'Project not found'
-            });
-        }
-        res.status(500).json({ error: 'Failed to update project' });
+// PUT update project (Admin only)
+router.put('/:id', authMiddleware, async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
     }
+
+    const {
+      title,
+      slug,
+      shortDescription,
+      fullDescription,
+      techStack,
+      coverImageUrl,
+      githubUrl,
+      liveUrl,
+      isFeatured,
+      displayOrder,
+    } = req.body;
+
+    const data = {};
+    if (title !== undefined) data.title = title.trim();
+    if (slug !== undefined) data.slug = slug.trim().toLowerCase();
+    if (shortDescription !== undefined) data.shortDescription = shortDescription;
+    if (fullDescription !== undefined) data.fullDescription = fullDescription;
+    if (techStack !== undefined) data.techStack = Array.isArray(techStack) ? techStack : [];
+    if (coverImageUrl !== undefined) data.coverImageUrl = coverImageUrl;
+    if (githubUrl !== undefined) data.githubUrl = githubUrl;
+    if (liveUrl !== undefined) data.liveUrl = liveUrl;
+    if (isFeatured !== undefined) data.isFeatured = Boolean(isFeatured);
+    if (displayOrder !== undefined) data.displayOrder = Number(displayOrder);
+
+    const project = await prisma.project.update({
+      where: { id },
+      data,
+    });
+    res.json(project);
+  } catch (err) {
+    if (err.code === 'P2025') {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    if (err.code === 'P2002') {
+      return res.status(409).json({ error: 'Slug is already in use by another project' });
+    }
+    next(err);
+  }
 });
 
-router.delete('/:id', authMiddleware, async (req, res) => {
-    try {
-        await prisma.project.delete({
-            where: { id: Number(req.params.id) },
-        });
-        res.status(204).send();
-    } catch (err) {
-        console.error(err);
-        if (err.code === 'P2025') {
-            return res.status(404).json({
-                error: 'Project Not Found'
-            });
-        }
-        res.status(500).json({ error: "Failed to delete project" });
+// DELETE project (Admin only)
+router.delete('/:id', authMiddleware, async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid project ID' });
     }
+
+    await prisma.project.delete({
+      where: { id },
+    });
+    res.status(204).send();
+  } catch (err) {
+    if (err.code === 'P2025') {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    next(err);
+  }
 });
 
 export default router;
