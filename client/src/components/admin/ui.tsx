@@ -8,11 +8,13 @@ export function Modal({
   onClose,
   title,
   children,
+  maxWidth = 'max-w-2xl',
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  maxWidth?: string;
 }) {
   return (
     <Transition appear show={open} as={Fragment}>
@@ -26,10 +28,10 @@ export function Modal({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black/40" style={{ backdropFilter: 'blur(2px)' }} />
+          <div className="fixed inset-0 bg-black/70" style={{ backdropFilter: 'blur(4px)' }} />
         </Transition.Child>
         <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4">
+          <div className="flex min-h-full items-center justify-center p-3 sm:p-6">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-200"
@@ -39,11 +41,23 @@ export function Modal({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-lg panel p-6 text-left">
-                <Dialog.Title as="h3" className="font-display uppercase font-bold tracking-tight text-lg mb-4">
-                  {title}
-                </Dialog.Title>
-                {children}
+              <Dialog.Panel className={`w-full ${maxWidth} panel p-5 sm:p-7 text-left max-h-[90vh] flex flex-col overflow-hidden shadow-2xl border border-hairline-strong`}>
+                <div className="flex items-center justify-between pb-3 border-b border-hairline mb-4 shrink-0">
+                  <Dialog.Title as="h3" className="font-display uppercase font-bold tracking-tight text-lg text-ink">
+                    {title}
+                  </Dialog.Title>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-mid hover:text-ink hover:bg-slate-800/40 transition-colors text-sm font-bold"
+                    aria-label="Close dialog"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="overflow-y-auto flex-1 pr-1 custom-scrollbar">
+                  {children}
+                </div>
               </Dialog.Panel>
             </Transition.Child>
           </div>

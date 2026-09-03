@@ -2,6 +2,7 @@ import express from 'express';
 import { ZodError } from 'zod';
 import prisma from '../../config/db.js';
 import authMiddleware from '../../middleware/authMiddleware.js';
+import cache from '../../utils/cache.js';
 import { DEFAULTS, SETTING_KEYS } from './defaults.js';
 import { validateSettings } from './site.schema.js';
 
@@ -51,10 +52,19 @@ async function saveSettings(settings) {
   }
 }
 
-// Public — full front-end content bundle for the site
+// Public — full front-end content bundle for the site (cached for 180s)
 router.get('/', async (_req, res) => {
   try {
+    const cacheKey = 'site:settings';
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      res.setHeader('X-Cache', 'HIT');
+      return res.json(cached);
+    }
+
     const settings = await loadSettings();
+    cache.set(cacheKey, settings, 180);
+    res.setHeader('X-Cache', 'MISS');
     res.json(settings);
   } catch (err) {
     console.error(err);
@@ -71,6 +81,7 @@ router.put('/', authMiddleware, async (req, res) => {
       if (val && typeof val === 'object') existing[key] = { ...existing[key], ...val };
     }
     await saveSettings(existing);
+    cache.invalidate('site');
     res.json(existing);
   } catch (err) {
     if (err instanceof ZodError) {

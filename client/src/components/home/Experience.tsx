@@ -44,27 +44,27 @@ export default function ExperienceSection({ experience }: { experience: Experien
                 key={e.id ?? i} 
                 className="panel p-6 md:p-8 transition-all hover:border-brand/40 group"
               >
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                  <div className="space-y-1">
-                    <h3 className="font-display uppercase font-bold text-xl md:text-2xl text-ink tracking-tight group-hover:text-brand transition-colors">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 overflow-hidden">
+                  <div className="space-y-1 min-w-0 flex-1 overflow-hidden">
+                    <h3 className="font-display uppercase font-bold text-xl md:text-2xl text-ink tracking-tight group-hover:text-brand transition-colors break-words max-w-full">
                       {e.title}
                     </h3>
                     {e.organization && (
-                      <div className="text-sm md:text-base font-medium text-brand">
+                      <div className="text-sm md:text-base font-medium text-brand break-words max-w-full">
                         @ {e.organization}
                       </div>
                     )}
                   </div>
                   
                   {dateRange && (
-                    <div className="file-chip self-start text-xs font-mono text-faint">
+                    <div className="file-chip self-start text-xs font-mono text-faint shrink-0">
                       📅 {dateRange}
                     </div>
                   )}
                 </div>
 
                 {e.description && (
-                  <p className="mt-4 text-sm md:text-base leading-relaxed text-mid">
+                  <p className="mt-4 text-sm md:text-base leading-relaxed text-mid break-words max-w-full whitespace-pre-line">
                     {e.description}
                   </p>
                 )}

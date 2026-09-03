@@ -60,6 +60,15 @@ export default function Header() {
 
         {/* Right Action Icons */}
         <div className="flex items-center gap-3">
+          {isHome && (
+            <a 
+              href="#contact" 
+              className="hidden sm:inline-flex btn btn-brand text-xs py-1.5 px-3.5"
+            >
+              Hire Me ↗
+            </a>
+          )}
+
           {hasToken && (
             <Link 
               to="/admin" 

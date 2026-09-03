@@ -1,30 +1,52 @@
 import express from 'express';
 import prisma from '../../config/db.js';
 import authMiddleware from '../../middleware/authMiddleware.js';
+import cache from '../../utils/cache.js';
 
 const router = express.Router();
 
-// GET all projects
+// GET all projects (cached for 120s)
 router.get('/', async (_req, res, next) => {
   try {
+    const cacheKey = 'projects:all';
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      res.setHeader('X-Cache', 'HIT');
+      return res.json(cached);
+    }
+
     const projects = await prisma.project.findMany({
       orderBy: { displayOrder: 'asc' },
     });
+
+    cache.set(cacheKey, projects, 120);
+    res.setHeader('X-Cache', 'MISS');
     res.json(projects);
   } catch (err) {
     next(err);
   }
 });
 
-// GET single project by slug
+// GET single project by slug (cached for 120s)
 router.get('/:slug', async (req, res, next) => {
   try {
+    const slug = req.params.slug.trim().toLowerCase();
+    const cacheKey = `projects:slug:${slug}`;
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      res.setHeader('X-Cache', 'HIT');
+      return res.json(cached);
+    }
+
     const project = await prisma.project.findUnique({
-      where: { slug: req.params.slug },
+      where: { slug },
     });
     if (!project) {
       return res.status(404).json({ error: 'Project not found' });
     }
+
+    cache.set(cacheKey, project, 120);
+    res.setHeader('X-Cache', 'MISS');
     res.json(project);
   } catch (err) {
     next(err);
@@ -65,6 +87,8 @@ router.post('/', authMiddleware, async (req, res, next) => {
         displayOrder: typeof displayOrder === 'number' ? displayOrder : 0,
       },
     });
+
+    cache.invalidate('projects');
     res.status(201).json(project);
   } catch (err) {
     if (err.code === 'P2002') {
@@ -111,6 +135,8 @@ router.put('/:id', authMiddleware, async (req, res, next) => {
       where: { id },
       data,
     });
+
+    cache.invalidate('projects');
     res.json(project);
   } catch (err) {
     if (err.code === 'P2025') {
@@ -134,6 +160,8 @@ router.delete('/:id', authMiddleware, async (req, res, next) => {
     await prisma.project.delete({
       where: { id },
     });
+
+    cache.invalidate('projects');
     res.status(204).send();
   } catch (err) {
     if (err.code === 'P2025') {

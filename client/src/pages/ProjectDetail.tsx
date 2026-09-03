@@ -69,12 +69,12 @@ export default function ProjectDetail() {
           )}
         </div>
 
-        <h1 className="font-display font-extrabold uppercase text-3xl sm:text-5xl md:text-6xl text-ink tracking-tight">
+        <h1 className="font-display font-extrabold uppercase text-3xl sm:text-5xl md:text-6xl text-ink tracking-tight break-words max-w-full">
           {project.title}
         </h1>
 
         {project.shortDescription && (
-          <p className="text-lg md:text-xl text-mid leading-relaxed max-w-2xl">
+          <p className="text-lg md:text-xl text-mid leading-relaxed max-w-3xl break-words whitespace-pre-line">
             {project.shortDescription}
           </p>
         )}
@@ -96,7 +96,7 @@ export default function ProjectDetail() {
 
       {/* Project Cover Image */}
       {cover && (
-        <div className="mt-10 panel overflow-hidden border-brand/30">
+        <div className="mt-10 panel overflow-hidden border-brand/30 shadow-xl">
           <img
             src={cover}
             alt={project.title}
@@ -108,23 +108,25 @@ export default function ProjectDetail() {
       )}
 
       {/* Tech Stack Chips */}
-      <div className="mt-10 panel p-6">
-        <span className="file-label text-xs mb-3 block">Technologies & Architecture</span>
-        <div className="flex flex-wrap gap-2">
-          {project.techStack.map((t) => (
-            <span key={t} className="file-chip text-xs py-1 px-3">
-              {t}
-            </span>
-          ))}
+      {project.techStack && project.techStack.length > 0 && (
+        <div className="mt-10 panel p-6 overflow-hidden">
+          <span className="file-label text-xs mb-3 block">Technologies & Architecture</span>
+          <div className="flex flex-wrap gap-2 overflow-hidden">
+            {project.techStack.map((t) => (
+              <span key={t} className="file-chip text-xs py-1 px-3 max-w-[200px] truncate">
+                {t}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Detailed Description */}
       {paragraphs.length > 0 && (
-        <div className="mt-10 panel p-6 sm:p-8 space-y-4">
-          <span className="file-label text-xs block">Engineering Overview</span>
+        <div className="mt-10 panel p-6 sm:p-8 space-y-4 overflow-hidden">
+          <span className="file-label text-xs block text-brand">Engineering Overview</span>
           {paragraphs.map((p, i) => (
-            <p key={i} className="text-base sm:text-lg leading-relaxed text-mid">
+            <p key={i} className="text-base sm:text-lg leading-relaxed text-mid break-words whitespace-pre-line">
               {p}
             </p>
           ))}

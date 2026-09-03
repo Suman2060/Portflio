@@ -92,13 +92,21 @@ export default function Hero() {
               ))}
             </div>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-wrap gap-4 mt-8">
+            {/* CTA Buttons & Recruiter Actions */}
+            <div className="flex flex-wrap items-center gap-3 mt-8">
               <a className="btn btn-brand" href={hero.primaryCtaHref || '#contact'}>
                 {hero.primaryCtaLabel || 'Get in Touch'} <span className="arrow">↗</span>
               </a>
               <a className="btn btn-ghost" href={hero.secondaryCtaHref || '#work'}>
                 {hero.secondaryCtaLabel || 'View Projects'} <span className="arrow">↓</span>
+              </a>
+              <a 
+                className="btn btn-ghost text-xs border-brand/40 text-brand hover:bg-brand/10" 
+                href={(site.socials?.resumeUrl as string) || (site.socials?.github as string) || '#contact'} 
+                target={(site.socials?.resumeUrl || site.socials?.github) ? '_blank' : '_self'}
+                rel="noreferrer"
+              >
+                📄 Resume / CV <span className="arrow">↗</span>
               </a>
             </div>
           </div>

@@ -13,12 +13,14 @@ import Work from '../components/home/Work';
 import Skills from '../components/home/Skills';
 import Experience from '../components/home/Experience';
 import Contact from '../components/home/Contact';
+import LoadingScreen from '../components/ui/LoadingScreen';
 
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [experience, setExperience] = useState<ExperienceType[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const [showPreloader, setShowPreloader] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -28,7 +30,7 @@ export default function Home() {
       if (p.status === 'fulfilled') setProjects(p.value);
       if (s.status === 'fulfilled') setSkills(s.value);
       if (ex.status === 'fulfilled') setExperience(ex.value);
-      setLoading(false);
+      setDataLoaded(true);
     })();
     return () => {
       cancelled = true;
@@ -39,10 +41,14 @@ export default function Home() {
 
   return (
     <div>
+      {showPreloader && (
+        <LoadingScreen onComplete={() => setShowPreloader(false)} />
+      )}
+
       <Hero />
       <Marquee skills={filledSkills} />
       <Statement projectsCount={projects.length} experienceCount={experience.length} />
-      <Work projects={projects} loading={loading} />
+      <Work projects={projects} loading={!dataLoaded} />
       <Skills skills={filledSkills} />
       <Experience experience={experience} />
       <Contact />

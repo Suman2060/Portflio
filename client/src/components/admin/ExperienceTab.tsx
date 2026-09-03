@@ -120,36 +120,35 @@ export default function ExperienceTab() {
         </div>
       </div>
 
-      <div className="flex flex-col">
+      <div className="flex flex-col gap-3">
         {items.length === 0 && (
-          <p className="text-sm" style={{ color: 'var(--mid)' }}>no experience yet.</p>
+          <p className="text-sm" style={{ color: 'var(--mid)' }}>No experience entries logged yet.</p>
         )}
         {items.map((e) => (
-          <div key={e.id} className="work-row">
+          <div key={e.id} className="panel-soft p-5 border transition-all hover:border-brand/40 overflow-hidden">
             <div className="flex items-start justify-between gap-4">
-              <div>
+              <div className="min-w-0 flex-1 overflow-hidden space-y-1">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <span className="font-display uppercase font-bold tracking-tight" style={{ fontSize: 20 }}>
+                  <span className="font-display uppercase font-bold tracking-tight text-xl text-ink break-words max-w-full">
                     {e.title}
                   </span>
-                  {e.organization && <span className="file-label">{e.organization}</span>}
+                  {e.organization && <span className="file-label text-brand break-words max-w-full">@{e.organization}</span>}
                 </div>
                 {e.description && (
-                  <p className="mt-1 text-sm" style={{ color: 'var(--mid)' }}>{e.description}</p>
+                  <p className="mt-2 text-sm text-mid break-words max-w-full leading-relaxed whitespace-pre-line">{e.description}</p>
                 )}
                 {(e.startDate || e.endDate) && (
-                  <div className="file-label mt-2">
-                    {e.startDate ? e.startDate.slice(0, 10) : '?'} → {e.endDate ? e.endDate.slice(0, 10) : 'present'}
+                  <div className="file-label text-[10px] mt-2 text-faint">
+                    📅 {e.startDate ? e.startDate.slice(0, 10) : '?'} → {e.endDate ? e.endDate.slice(0, 10) : 'present'}
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <button className="file-chip" onClick={() => openEdit(e)}>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button className="file-chip cursor-pointer hover:border-brand" onClick={() => openEdit(e)}>
                   <PencilSquareIcon className="w-4 h-4" />
                 </button>
                 <button
-                  className="file-chip"
-                  style={{ color: 'var(--brand)' }}
+                  className="file-chip cursor-pointer hover:border-rose-500 hover:text-rose-400"
                   onClick={async () => {
                     await deleteExperience(e.id);
                     await load();
@@ -163,47 +162,62 @@ export default function ExperienceTab() {
         ))}
       </div>
 
-      <Modal open={!!editing} onClose={() => setEditing(null)} title="edit experience">
-        <div className="flex flex-col gap-3">
-          <input
-            className="field"
-            value={editForm.title || ''}
-            onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }) as Partial<Experience>)}
-            placeholder="title"
-          />
-          <input
-            className="field"
-            value={editForm.organization || ''}
-            onChange={(e) => setEditForm((p) => ({ ...p, organization: e.target.value }) as Partial<Experience>)}
-            placeholder="organization"
-          />
-          <textarea
-            className="field"
-            rows={2}
-            value={editForm.description || ''}
-            onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }) as Partial<Experience>)}
-            placeholder="description"
-          />
-          <div className="grid grid-cols-2 gap-3">
+      <Modal open={!!editing} onClose={() => setEditing(null)} title={`Edit: ${editing?.title || ''}`} maxWidth="max-w-xl">
+        <div className="flex flex-col gap-3 max-w-full overflow-hidden">
+          <div>
+            <label className="file-label text-[10px] mb-1 block">Role / Title</label>
             <input
               className="field"
-              type="date"
-              value={(editForm.startDate as string) || ''}
-              onChange={(e) => setEditForm((p) => ({ ...p, startDate: e.target.value }) as Partial<Experience>)}
-            />
-            <input
-              className="field"
-              type="date"
-              value={(editForm.endDate as string) || ''}
-              onChange={(e) => setEditForm((p) => ({ ...p, endDate: e.target.value }) as Partial<Experience>)}
+              value={editForm.title || ''}
+              onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }) as Partial<Experience>)}
+              placeholder="e.g. Lead Software Engineer"
             />
           </div>
-          <div className="mt-2 flex justify-end gap-2">
-            <button className="btn btn-ghost" style={{ padding: '8px 16px', fontSize: 13 }} onClick={() => setEditing(null)}>
-              cancel
+          <div>
+            <label className="file-label text-[10px] mb-1 block">Organization / Company</label>
+            <input
+              className="field"
+              value={editForm.organization || ''}
+              onChange={(e) => setEditForm((p) => ({ ...p, organization: e.target.value }) as Partial<Experience>)}
+              placeholder="e.g. Tech Corp"
+            />
+          </div>
+          <div>
+            <label className="file-label text-[10px] mb-1 block">Description / Responsibilities</label>
+            <textarea
+              className="field"
+              rows={4}
+              value={editForm.description || ''}
+              onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }) as Partial<Experience>)}
+              placeholder="Led architectural design and microservices migration..."
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="file-label text-[10px] mb-1 block">Start Date</label>
+              <input
+                className="field"
+                type="date"
+                value={(editForm.startDate as string) || ''}
+                onChange={(e) => setEditForm((p) => ({ ...p, startDate: e.target.value }) as Partial<Experience>)}
+              />
+            </div>
+            <div>
+              <label className="file-label text-[10px] mb-1 block">End Date (Leave blank if present)</label>
+              <input
+                className="field"
+                type="date"
+                value={(editForm.endDate as string) || ''}
+                onChange={(e) => setEditForm((p) => ({ ...p, endDate: e.target.value }) as Partial<Experience>)}
+              />
+            </div>
+          </div>
+          <div className="mt-2 pt-3 border-t border-hairline flex justify-end gap-2">
+            <button className="btn btn-ghost text-xs py-2 px-4" onClick={() => setEditing(null)}>
+              Cancel
             </button>
-            <button className="btn btn-brand" style={{ padding: '8px 16px', fontSize: 13, color: '#fff' }} onClick={saveEdit}>
-              save
+            <button className="btn btn-brand text-xs py-2 px-5" onClick={saveEdit}>
+              Save
             </button>
           </div>
         </div>

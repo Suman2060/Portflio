@@ -57,8 +57,8 @@ export default function Work({ projects, loading }: { projects: Project[]; loadi
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     
                     {/* Left: Index & Details */}
-                    <div className="flex items-start gap-4 md:gap-6 flex-1 min-w-0">
-                      <span className="font-mono text-xs md:text-sm font-bold text-brand py-1">
+                    <div className="flex items-start gap-4 md:gap-6 flex-1 min-w-0 overflow-hidden">
+                      <span className="font-mono text-xs md:text-sm font-bold text-brand py-1 shrink-0">
                         0{i + 1}
                       </span>
 
@@ -67,44 +67,46 @@ export default function Work({ projects, loading }: { projects: Project[]; loadi
                           src={cover}
                           alt={p.title}
                           loading="lazy"
-                          className="hidden sm:block w-28 h-20 object-cover rounded-lg border border-slate-700/60 shrink-0"
+                          className="hidden sm:block w-28 h-20 object-cover rounded-lg border border-slate-700/60 shrink-0 shadow-sm"
                         />
                       )}
 
-                      <div className="flex-1 min-w-0 space-y-2">
+                      <div className="flex-1 min-w-0 space-y-2 overflow-hidden">
                         <div className="flex flex-wrap items-center gap-3">
                           <Link 
                             to={`/projects/${p.slug}`}
-                            className="font-display font-bold uppercase text-2xl md:text-3xl text-ink hover:text-brand transition-colors tracking-tight"
+                            className="font-display font-bold uppercase text-2xl md:text-3xl text-ink hover:text-brand transition-colors tracking-tight break-words max-w-full"
                           >
                             {p.title}
                           </Link>
                           {p.isFeatured && (
-                            <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full border border-brand/40 text-brand bg-brand/10">
+                            <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full border border-brand/40 text-brand bg-brand/10 shrink-0">
                               Featured
                             </span>
                           )}
                         </div>
 
                         {p.shortDescription && (
-                          <p className="text-sm md:text-base text-mid line-clamp-2 max-w-2xl">
+                          <p className="text-sm md:text-base text-mid line-clamp-2 max-w-2xl break-words leading-relaxed">
                             {p.shortDescription}
                           </p>
                         )}
 
                         {/* Tech Stack Badges */}
-                        <div className="flex flex-wrap gap-1.5 pt-1">
-                          {p.techStack.map((t) => (
-                            <span key={t} className="file-chip text-[10px] py-0.5 px-2">
-                              {t}
-                            </span>
-                          ))}
-                        </div>
+                        {p.techStack && p.techStack.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 pt-1 overflow-hidden">
+                            {p.techStack.map((t) => (
+                              <span key={t} className="file-chip text-[10px] py-0.5 px-2 max-w-[180px] truncate">
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
 
                     {/* Right: Quick Action Links */}
-                    <div className="flex items-center gap-3 shrink-0 self-end lg:self-center pt-2 lg:pt-0">
+                    <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start lg:self-center pt-2 lg:pt-0">
                       {p.githubUrl && (
                         <a
                           href={p.githubUrl}
@@ -132,7 +134,7 @@ export default function Work({ projects, loading }: { projects: Project[]; loadi
                         className="btn btn-ghost text-xs py-2 px-3"
                         title="Read Case Study"
                       >
-                        Details →
+                        Case Study →
                       </Link>
                     </div>
 
