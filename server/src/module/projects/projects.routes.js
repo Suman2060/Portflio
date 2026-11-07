@@ -5,6 +5,17 @@ import cache from '../../utils/cache.js';
 
 const router = express.Router();
 
+router.get('/admin', authMiddleware, async (_req, res, next) => {
+  try {
+    const projects = await prisma.project.findMany({
+      orderBy: { displayOrder: 'asc' },
+    });
+    res.json(projects);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET all projects (cached for 120s)
 router.get('/', async (_req, res, next) => {
   try {
@@ -16,6 +27,7 @@ router.get('/', async (_req, res, next) => {
     }
 
     const projects = await prisma.project.findMany({
+      where: { isPublished: true },
       orderBy: { displayOrder: 'asc' },
     });
 
@@ -66,6 +78,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
       githubUrl,
       liveUrl,
       isFeatured,
+      isPublished,
       displayOrder,
     } = req.body;
 
@@ -84,6 +97,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
         githubUrl: githubUrl || null,
         liveUrl: liveUrl || null,
         isFeatured: Boolean(isFeatured),
+        isPublished: isPublished !== false,
         displayOrder: typeof displayOrder === 'number' ? displayOrder : 0,
       },
     });
@@ -116,6 +130,7 @@ router.put('/:id', authMiddleware, async (req, res, next) => {
       githubUrl,
       liveUrl,
       isFeatured,
+      isPublished,
       displayOrder,
     } = req.body;
 
@@ -129,6 +144,7 @@ router.put('/:id', authMiddleware, async (req, res, next) => {
     if (githubUrl !== undefined) data.githubUrl = githubUrl;
     if (liveUrl !== undefined) data.liveUrl = liveUrl;
     if (isFeatured !== undefined) data.isFeatured = Boolean(isFeatured);
+    if (isPublished !== undefined) data.isPublished = Boolean(isPublished);
     if (displayOrder !== undefined) data.displayOrder = Number(displayOrder);
 
     const project = await prisma.project.update({

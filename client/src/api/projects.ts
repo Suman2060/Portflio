@@ -6,6 +6,21 @@ export async function getProjects(): Promise<Project[]> {
   return res.data;
 }
 
+export async function getAdminProjects(): Promise<Project[]> {
+  const res = await apiClient.get<Project[]>('/projects/admin');
+  return res.data;
+}
+
+export async function getGitHubProjects(): Promise<Project[]> {
+  const res = await apiClient.get<Project[]>('/github/projects');
+  return res.data;
+}
+
+export async function syncGitHubProjects(): Promise<{ synced: number }> {
+  const res = await apiClient.post<{ synced: number }>('/github/sync');
+  return res.data;
+}
+
 export async function getProjectBySlug(slug: string): Promise<Project> {
   const res = await apiClient.get<Project>(`/projects/${slug}`);
   return res.data;

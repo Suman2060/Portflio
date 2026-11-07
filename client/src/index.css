@@ -472,3 +472,90 @@ textarea.field {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+/* ---------------- Conversion & Motion Details ---------------- */
+.hero-eyebrow {
+  color: var(--mid);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  line-height: 1.6;
+  max-width: 430px;
+}
+
+.hero-next-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(0, 242, 254, 0.22);
+  border-radius: 14px;
+  background: linear-gradient(100deg, rgba(0, 242, 254, 0.08), var(--paper-card));
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.hero-next-step:hover {
+  transform: translateY(-3px);
+  border-color: var(--brand);
+  box-shadow: 0 12px 30px -18px rgba(0, 242, 254, 0.8);
+}
+
+.hero-next-step-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 10px;
+  color: #030712;
+  background: var(--brand);
+  font-size: 18px;
+}
+
+.hero-next-step strong,
+.hero-next-step small {
+  display: block;
+}
+
+.hero-next-step strong {
+  font-size: 13px;
+}
+
+.hero-next-step small {
+  margin-top: 2px;
+  color: var(--mid);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.mobile-menu-enter {
+  animation: menu-enter 0.22s ease-out both;
+}
+
+@keyframes menu-enter {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.contact-form-card {
+  box-shadow: 0 24px 70px -32px rgba(0, 242, 254, 0.45);
+}
+
+[data-aos] {
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

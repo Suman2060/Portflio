@@ -7,7 +7,6 @@ const apiClient = axios.create({
     },
 });
 
-// Automatically attach Bearer token from localStorage when present
 apiClient.interceptors.request.use((config) => {
     try {
         const token = localStorage.getItem('token');
@@ -20,5 +19,17 @@ apiClient.interceptors.request.use((config) => {
     }
     return config;
 });
+
+apiClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401 && window.location.pathname !== '/login') {
+            localStorage.removeItem('token');
+            window.location.assign('/login');
+        }
+
+        return Promise.reject(error);
+    },
+);
 
 export default apiClient;

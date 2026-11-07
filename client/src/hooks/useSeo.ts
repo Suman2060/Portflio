@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useSite } from '../context/SiteContext';
+import { useSite } from '../store/siteStore';
 
 function upsertMeta(attr: 'name' | 'property', key: string, content: string) {
   let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);

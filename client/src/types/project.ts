@@ -9,9 +9,12 @@ export interface Project {
   githubUrl: string | null;
   liveUrl: string | null;
   isFeatured: boolean;
+  isPublished: boolean;
+  githubId?: string | null;
   displayOrder: number;
   createdAt: string;
   updatedAt: string;
+  source?: 'cms' | 'github';
 }
 
 // Shape used when creating a project — id/timestamps are server-generated
@@ -25,5 +28,6 @@ export interface CreateProjectInput {
   githubUrl?: string;
   liveUrl?: string;
   isFeatured?: boolean;
+  isPublished?: boolean;
   displayOrder?: number;
 }

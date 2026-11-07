@@ -14,6 +14,7 @@ import experienceRoutes from "./module/experience/experience.routes.js";
 import messageRoutes from "./module/messages/messages.routes.js";
 import uploadRoutes from "./module/uploads/uploads.routes.js";
 import siteRoutes from "./module/site/site.routes.js";
+import githubRoutes from "./module/github/github.routes.js";
 
 const PORT = process.env.PORT || 5500;
 const app = express();
@@ -114,6 +115,7 @@ app.use("/api/experience", experienceRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/site", siteRoutes);
+app.use("/api/github", githubRoutes);
 
 // Global Error Handler Middleware
 app.use((err, _req, res, _next) => {

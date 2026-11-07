@@ -12,6 +12,7 @@ High-performance, cyber-minimalist portfolio frontend with an integrated Admin S
 - **React Router 7**: Client-side routing with lazy-loaded code-splitting for subroutes.
 - **@dnd-kit**: Drag-and-drop toolkit for reordering projects and skills in the Admin Studio.
 - **Axios**: HTTP client with request interceptors for automatic JWT authorization injection.
+- **AOS**: Accessible, reduced-motion-aware scroll reveal animations for visitor engagement.
 
 ---
 
@@ -30,25 +31,22 @@ client/
 │   │   ├── skills.ts         # Skills CRUD API calls
 │   │   └── uploads.ts        # Image upload API calls
 │   │
-│   ├── components/           # Reusable UI & section components
-│   │   ├── DarkModeToggle.tsx # Theme toggle switch
-│   │   ├── SiteSettingsManager.tsx # Admin site content editor
-│   │   ├── admin/            # Admin Studio tabs (Projects, Skills, Experience, Messages)
-│   │   ├── home/             # Landing page sections (Hero, Statement, Work, Skills, Experience, Contact)
-│   │   ├── layout/           # Header, Footer, Navigation, Container
-│   │   └── ui/               # Custom cursor, modals, chips, buttons
-│   │
-│   ├── context/              # React Context (SiteContext for live settings)
+│   ├── app/                  # Application shell and route composition
+│   ├── features/             # Route and domain-specific code
+│   │   ├── admin/            # Dashboard page, editor tabs, and site settings
+│   │   ├── auth/             # Login page and authentication UI
+│   │   ├── home/             # Home page and all landing sections
+│   │   │   ├── components/   # Hero, Statement, Work, Skills, Experience, Contact
+│   │   │   └── pages/        # Home route page
+│   │   └── projects/         # Project detail page
+│   ├── shared/               # Reusable layout and UI components
+│   │   └── components/       # Layout, UI primitives, and theme controls
+│   ├── store/                # Zustand stores for API-backed application state
+│   │   └── siteStore.ts      # Site settings and public portfolio data
 │   ├── hooks/                # Custom hooks (useSeo, etc.)
-│   ├── pages/                # Route pages
-│   │   ├── Home.tsx          # Main portfolio showcase
-│   │   ├── Login.tsx         # Admin authentication login
-│   │   ├── Dashboard.tsx     # Content Studio Admin Dashboard
-│   │   └── ProjectDetail.tsx # Deep-dive project case study page
 │   │
 │   ├── types/                # TypeScript interface and type declarations
 │   ├── utils/                # Utility helpers
-│   ├── App.tsx               # Root application router with Suspense lazy loading
 │   ├── index.css             # Design system tokens, typography, and dark mode theme
 │   └── main.tsx              # React entry point
 │
